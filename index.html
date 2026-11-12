@@ -1,0 +1,1445 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ROTA360 – Plataforma Inteligente de Logística de Manutenção e Experiência do Cliente</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#075985',
+                            800: '#0c4a6e',
+                            900: '#082f49',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        /* Animações suaves para transições e mapa simulado */
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 0.8; }
+            100% { transform: scale(2.2); opacity: 0; }
+        }
+        .pulse-marker::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: #0284c7;
+            border-radius: 9999px;
+            animation: pulse-ring 2s infinite;
+            z-index: -1;
+        }
+        .future-feature-card {
+            position: relative;
+            transition: all 0.25s ease;
+        }
+        .highlight-mvp .future-feature-card {
+            opacity: 0.35;
+            filter: grayscale(40%);
+        }
+        .highlight-future .mvp-feature-card {
+            opacity: 0.35;
+            filter: grayscale(40%);
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col">
+
+    <!-- BARRA DE NOTIFICAÇÃO / TOAST -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+    <!-- MODAL DETALHES DE FUNCIONALIDADE FUTURA / ROADMAP -->
+    <div id="roadmap-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-purple-200 animate-fade-in">
+            <div class="bg-gradient-to-r from-purple-700 to-indigo-800 px-6 py-4 flex items-center justify-between text-white">
+                <div class="flex items-center gap-2.5">
+                    <span class="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+                        <i class="fa-solid fa-rocket text-purple-200"></i>
+                    </span>
+                    <div>
+                        <span id="modal-tag-badge" class="text-[10px] font-bold uppercase tracking-wider bg-purple-500/40 px-2 py-0.5 rounded border border-purple-300/30">Funcionalidade Futura</span>
+                        <h3 id="modal-title" class="font-bold text-lg leading-tight mt-0.5">Detalhes do Roadmap</h3>
+                    </div>
+                </div>
+                <button onclick="closeRoadmapModal()" class="text-white/80 hover:text-white p-1.5 rounded-lg hover:bg-white/10">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <p id="modal-desc" class="text-sm text-slate-600 leading-relaxed"></p>
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 grid grid-cols-2 gap-3 text-xs">
+                    <div>
+                        <span class="text-slate-400 block">Impacto Estimado:</span>
+                        <span id="modal-impact" class="font-bold text-slate-800 text-sm">Alto</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 block">Esforço Técnico:</span>
+                        <span id="modal-effort" class="font-bold text-slate-800 text-sm">Alto</span>
+                    </div>
+                    <div class="col-span-2 pt-2 border-t border-slate-200">
+                        <span class="text-slate-400 block">Enquadramento de Priorização:</span>
+                        <span id="modal-justification" class="font-medium text-slate-700 mt-0.5 block"></span>
+                    </div>
+                </div>
+                <div id="modal-simulation-box" class="bg-purple-50 border border-purple-200 rounded-xl p-4 text-xs text-purple-900 space-y-2">
+                    <div class="font-bold flex items-center gap-1.5 text-purple-800">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Simulação Conceitual Ativa:
+                    </div>
+                    <p id="modal-sim-result" class="text-purple-700"></p>
+                </div>
+            </div>
+            <div class="bg-slate-50 px-6 py-3.5 border-t border-slate-200 flex justify-end">
+                <button onclick="closeRoadmapModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold rounded-lg transition">
+                    Entendido • Fechar Visualização
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CABEÇALHO PRINCIPAL E SELETOR DE PERFIL -->
+    <header class="bg-brand-900 text-white shadow-lg sticky top-0 z-40 border-b border-brand-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between py-3 gap-3">
+                
+                <!-- Logo e Identificação do TCC -->
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-brand-600 flex items-center justify-center shadow-md shadow-cyan-500/20">
+                            <i class="fa-solid fa-route text-white text-lg"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="font-extrabold text-xl tracking-tight text-white">ROTA<span class="text-cyan-400">360</span></span>
+                                <span class="bg-cyan-500/20 text-cyan-300 border border-cyan-400/30 text-[11px] font-semibold px-2 py-0.5 rounded-full">
+                                    Protótipo Validação MVP
+                                </span>
+                            </div>
+                            <p class="text-xs text-slate-300 hidden sm:block">Logística de Manutenção Recorrente & Experiência do Cliente (Purificadores)</p>
+                        </div>
+                    </div>
+
+                    <!-- Indicador de Sincronização Mobile -->
+                    <div class="lg:hidden flex items-center gap-1.5 text-xs bg-brand-800 px-2.5 py-1 rounded-full border border-brand-700">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span class="text-slate-200 font-medium">Sync Ativo</span>
+                    </div>
+                </div>
+
+                <!-- Navegação de Perfis (2 Usuários + Matriz/Métricas) -->
+                <div class="flex flex-wrap items-center gap-1.5 bg-brand-800/90 p-1.5 rounded-xl border border-brand-700">
+                    <button onclick="switchTab('cliente')" id="tab-btn-cliente" class="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-cyan-500 text-slate-950 shadow-sm">
+                        <i class="fa-solid fa-building-user"></i>
+                        <div class="text-left">
+                            <span class="block leading-none">1. Visão Cliente</span>
+                            <span class="text-[10px] opacity-80 font-normal hidden sm:inline">Mariana (Gestora Admin.)</span>
+                        </div>
+                    </button>
+
+                    <button onclick="switchTab('operador')" id="tab-btn-operador" class="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all text-slate-200 hover:text-white hover:bg-brand-700/60">
+                        <i class="fa-solid fa-screwdriver-wrench"></i>
+                        <div class="text-left">
+                            <span class="block leading-none">2. Visão Operador</span>
+                            <span class="text-[10px] opacity-75 font-normal hidden sm:inline">Rafael (Técnico & Rotas)</span>
+                        </div>
+                    </button>
+
+                    <button onclick="switchTab('matriz')" id="tab-btn-matriz" class="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all text-slate-200 hover:text-white hover:bg-brand-700/60">
+                        <i class="fa-solid fa-chart-pie text-amber-400"></i>
+                        <div class="text-left">
+                            <span class="block leading-none">Indicadores do MVP</span>
+                            <span class="text-[10px] opacity-75 font-normal hidden sm:inline">Quadro-Resumo de Metas</span>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sub-barra: Legenda de Tags de Priorização e Filtro Rápido -->
+        <div class="bg-slate-900/90 border-t border-slate-800 py-2 px-4 sm:px-6 lg:px-8 text-xs">
+            <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-slate-400 font-medium flex items-center gap-1">
+                        <i class="fa-solid fa-tags text-cyan-400"></i> Filtro de Escopo:
+                    </span>
+                    <button onclick="setScopeFilter('all')" id="filter-all" class="px-2.5 py-1 rounded-md bg-slate-700 text-white font-semibold transition text-[11px]">
+                        Todos os Módulos (10)
+                    </button>
+                    <button onclick="setScopeFilter('mvp')" id="filter-mvp" class="px-2.5 py-1 rounded-md bg-emerald-950/80 text-emerald-300 border border-emerald-700/60 hover:bg-emerald-900/80 font-medium transition text-[11px] flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                        Apenas Escopo MVP (6)
+                    </button>
+                    <button onclick="setScopeFilter('future')" id="filter-future" class="px-2.5 py-1 rounded-md bg-purple-950/80 text-purple-300 border border-purple-700/60 hover:bg-purple-900/80 font-medium transition text-[11px] flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-purple-400"></span>
+                        Tag: Funcionalidades Futuras (4)
+                    </button>
+                </div>
+
+                <div class="hidden md:flex items-center gap-3 text-[11px] text-slate-300">
+                    <span class="flex items-center gap-1.5">
+                        <i class="fa-solid fa-arrows-rotate text-emerald-400 animate-spin" style="animation-duration: 6s;"></i>
+                        Status OS #4092 Sincronizado entre Cliente e Operador:
+                    </span>
+                    <span id="global-os-badge" class="px-2.5 py-0.5 rounded-full font-bold bg-amber-500/20 text-amber-300 border border-amber-400/30">
+                        3. Técnico em Rota
+                    </span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main id="main-content-wrapper" class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- ======================================================================= -->
+        <!-- VISÃO 1: CLIENTE (MARIANA OLIVEIRA - GESTORA ADMINISTRATIVA)            -->
+        <!-- ======================================================================= -->
+        <section id="view-cliente" class="space-y-6">
+            
+            <!-- Banner da Persona Cliente -->
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div class="flex items-start sm:items-center gap-4">
+                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 text-white flex items-center justify-center text-xl font-bold shadow-sm shrink-0">
+                        MO
+                    </div>
+                    <div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="text-xs font-bold uppercase tracking-wider text-brand-600 bg-brand-50 px-2.5 py-0.5 rounded-md border border-brand-200">
+                                Perfil: Cliente B2B / Carteira Recorrente
+                            </span>
+                            <span class="text-xs text-slate-500 font-medium">• Contrato Mensal (6 Purificadores Industriais)</span>
+                        </div>
+                        <h1 class="text-xl font-bold text-slate-900 mt-1">Olá, Mariana Oliveira <span class="text-sm font-normal text-slate-500">(Gestora Administrativa - TechCorp S.A.)</span></h1>
+                        <p class="text-xs text-slate-600 mt-0.5">
+                            <i class="fa-solid fa-bullseye text-brand-500 mr-1"></i>
+                            <strong>Objetivo da Persona:</strong> Ter previsibilidade sobre manutenções, acompanhar o status sem precisar ligar para cobrar e consultar pendências técnicas.
+                        </p>
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 w-full md:w-auto justify-end border-t md:border-t-0 pt-3 md:pt-0 border-slate-100">
+                    <div class="bg-slate-50 px-3 py-2 rounded-xl border border-slate-200 text-right">
+                        <span class="text-[10px] uppercase tracking-wider text-slate-400 block font-semibold">Unidade Atendida</span>
+                        <span class="text-xs font-bold text-slate-700"><i class="fa-solid fa-location-dot text-brand-500 mr-1"></i>Av. Rio Branco, 156 - Centro</span>
+                    </div>
+                    <button onclick="switchTab('operador')" class="px-3.5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition flex items-center gap-2 shadow-sm">
+                        <i class="fa-solid fa-repeat text-cyan-400"></i>
+                        Simular Ação como Operador
+                    </button>
+                </div>
+            </div>
+
+            <!-- Grid Principal da Visão Cliente -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <!-- Coluna Esquerda/Central (2 Colunas no Desktop) -->
+                <div class="lg:col-span-2 space-y-6">
+
+                    <!-- 1. PAINEL DE PREVISIBILIDADE E ACOMPANHAMENTO (MVP - PRIORIDADE PRIMÁRIA) -->
+                    <div class="mvp-feature-card bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="bg-slate-50 px-5 py-3.5 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-clock-rotate-left text-brand-600"></i>
+                                <h2 class="font-bold text-slate-800 text-sm sm:text-base">Painel de Previsibilidade e Acompanhamento da Visita</h2>
+                            </div>
+                            <!-- TAG DE PRIORIZAÇÃO -->
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                                MVP • Prioridade Primária (Alto Impacto / Médio Esforço)
+                            </span>
+                        </div>
+
+                        <div class="p-5 space-y-6">
+                            <!-- Cabeçalho da OS Ativa -->
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-brand-50/60 p-4 rounded-xl border border-brand-100">
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs font-extrabold text-brand-700 bg-white px-2.5 py-0.5 rounded border border-brand-200 shadow-2xs">OS #4092</span>
+                                        <span class="text-xs font-semibold text-slate-600">Manutenção Preventiva Recorrente + Resolução de Pendência</span>
+                                    </div>
+                                    <h3 class="text-base font-bold text-slate-900 mt-1.5">Troca de Refil Purificador Industrial (Piso 3 e Copa) + Válvula</h3>
+                                    <p class="text-xs text-slate-600 mt-0.5">
+                                        <i class="fa-solid fa-user-gear text-slate-400 mr-1"></i>Técnico Designado: <strong>Rafael Santos</strong> (Frota #04)
+                                    </p>
+                                </div>
+                                <div class="bg-white p-3 rounded-xl border border-brand-200 text-left sm:text-right shrink-0 shadow-2xs">
+                                    <span class="text-[11px] text-slate-500 font-medium block">Janela Prevista (SLA Garantido):</span>
+                                    <span id="client-eta-window" class="text-lg font-extrabold text-brand-700">Hoje, 14:00 - 14:40</span>
+                                    <span id="client-sla-status" class="block text-[11px] font-semibold text-emerald-600">
+                                        <i class="fa-solid fa-circle-check mr-0.5"></i> Dentro do Prazo Previsto
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Stepper de Progresso em Tempo Real -->
+                            <div>
+                                <div class="flex items-center justify-between text-xs text-slate-500 mb-2">
+                                    <span class="font-semibold text-slate-700">Linha do Tempo da Solicitação (Sincronizada com Campo):</span>
+                                    <span id="client-last-update" class="text-[11px]">Atualizado às 13:45</span>
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-5 gap-2 pt-2" id="client-stepper-container">
+                                    <!-- Renderizado dinamicamente via JS -->
+                                </div>
+                            </div>
+
+                            <!-- Alerta de Continuidade / Peças Garantidas na Ordem de Serviço -->
+                            <div class="bg-amber-50/90 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 mt-0.5">
+                                    <i class="fa-solid fa-clipboard-check"></i>
+                                </div>
+                                <div class="text-xs space-y-1 flex-1">
+                                    <div class="flex flex-wrap items-center justify-between gap-1">
+                                        <span class="font-bold text-amber-900">Continuidade de Informações (Sem necessidade de repetir o problema)</span>
+                                        <span class="text-[10px] font-semibold bg-amber-200/70 text-amber-900 px-2 py-0.5 rounded">Evita Retorno Improdutivo</span>
+                                    </div>
+                                    <p class="text-amber-800 leading-relaxed">
+                                        A pendência registrada na visita anterior (<strong>Substituição da Válvula Reguladora de Pressão 1/4"</strong> no purificador da Copa) já foi vinculada automaticamente a esta Ordem de Serviço e conferida no checklist do técnico Rafael antes da saída.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Box Dinâmico de Evidência de Conclusão (Aparece quando o técnico anexa foto / conclui) -->
+                            <div id="client-completion-evidence" class="hidden bg-emerald-50 border border-emerald-200 rounded-xl p-4 space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2 text-emerald-900 font-bold text-sm">
+                                        <i class="fa-solid fa-camera-retro text-emerald-600"></i>
+                                        Registro Técnico e Evidência Fotográfica Recebida
+                                    </div>
+                                    <span id="client-evidence-badge" class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-200 text-emerald-900">
+                                        Serviço Concluído
+                                    </span>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center bg-white p-3 rounded-lg border border-emerald-200">
+                                    <div class="flex items-center gap-3 sm:col-span-2">
+                                        <div class="w-16 h-16 rounded-lg bg-slate-100 border border-slate-200 flex flex-col items-center justify-center text-emerald-600 shrink-0">
+                                            <i class="fa-solid fa-file-shield text-xl"></i>
+                                            <span class="text-[9px] font-bold mt-1">FOTO OK</span>
+                                        </div>
+                                        <div class="text-xs space-y-1">
+                                            <p id="client-tech-notes" class="font-medium text-slate-800">"Refis C+3 substituídos e válvula reguladora de pressão instalada. Teste de vazão 100% normalizado."</p>
+                                            <p id="client-checkout-time" class="text-[11px] text-slate-500">Check-out registrado pelo técnico Rafael Santos.</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <button onclick="openToast('Laudo Técnico Digital da OS #4092 exportado com sucesso!', 'success')" class="w-full sm:w-auto px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition">
+                                            <i class="fa-solid fa-download mr-1"></i> Baixar Laudo
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. PRONTUÁRIO E HISTÓRICO DE ATENDIMENTOS (MVP - PRIORIDADE PRIMÁRIA) -->
+                    <div class="mvp-feature-card bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="bg-slate-50 px-5 py-3.5 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-file-waveform text-brand-600"></i>
+                                <h2 class="font-bold text-slate-800 text-sm sm:text-base">Prontuário de Equipamentos e Histórico de Visitas</h2>
+                            </div>
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                                MVP • Prioridade Primária (Alto Impacto / Médio Esforço)
+                            </span>
+                        </div>
+
+                        <div class="p-5">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse text-xs">
+                                    <thead>
+                                        <tr class="border-b border-slate-200 text-slate-500 uppercase tracking-wider text-[10px]">
+                                            <th class="pb-2.5 font-semibold">Data / OS</th>
+                                            <th class="pb-2.5 font-semibold">Equipamento / Local</th>
+                                            <th class="pb-2.5 font-semibold">Serviço Executado & Peças</th>
+                                            <th class="pb-2.5 font-semibold">Situação / Pendências</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-200" id="client-history-tbody">
+                                        <tr class="bg-brand-50/40">
+                                            <td class="py-3 pr-2 font-bold text-brand-700">
+                                                Hoje<br><span class="text-[10px] font-normal text-slate-500">OS #4092</span>
+                                            </td>
+                                            <td class="py-3 pr-2 font-medium text-slate-800">
+                                                Purificador AcquaPure Pro<br><span class="text-[10px] text-slate-500">3º Andar & Copa Central</span>
+                                            </td>
+                                            <td class="py-3 pr-2 text-slate-600">
+                                                Troca semestral de 2x Refis Polipropileno + Carvão Ativado + Válvula 1/4"
+                                            </td>
+                                            <td class="py-3" id="history-current-status-cell">
+                                                <span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-semibold text-[11px]">
+                                                    Em Andamento
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-3 pr-2 font-semibold text-slate-700">
+                                                12/05/2026<br><span class="text-[10px] font-normal text-slate-400">OS #3108</span>
+                                            </td>
+                                            <td class="py-3 pr-2 font-medium text-slate-800">
+                                                Purificador AcquaPure Pro<br><span class="text-[10px] text-slate-500">Copa Central</span>
+                                            </td>
+                                            <td class="py-3 pr-2 text-slate-600">
+                                                Higienização interna do reservatório e análise bacteriológica.
+                                            </td>
+                                            <td class="py-3">
+                                                <span id="past-pendency-badge" class="px-2 py-0.5 rounded-full bg-orange-100 text-orange-800 font-semibold text-[11px] inline-flex items-center gap-1">
+                                                    <i class="fa-solid fa-triangle-exclamation text-[10px]"></i> Pendência Válvula (Vinculada à OS #4092)
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-3 pr-2 font-semibold text-slate-700">
+                                                10/11/2025<br><span class="text-[10px] font-normal text-slate-400">OS #2290</span>
+                                            </td>
+                                            <td class="py-3 pr-2 font-medium text-slate-800">
+                                                6x Purificadores Industriais<br><span class="text-[10px] text-slate-500">Sede Completa</span>
+                                            </td>
+                                            <td class="py-3 pr-2 text-slate-600">
+                                                Substituição preventiva semestral do kit completo de filtragem.
+                                            </td>
+                                            <td class="py-3">
+                                                <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-semibold text-[11px]">
+                                                    <i class="fa-solid fa-check mr-0.5"></i> 100% Concluído
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coluna Direita (1 Coluna no Desktop) -->
+                <div class="space-y-6">
+
+                    <!-- 3. LEMBRETES E NOTIFICAÇÕES AUTOMÁTICAS (MVP - GANHO RÁPIDO) -->
+                    <div class="mvp-feature-card bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="bg-slate-50 px-4 py-3 border-b border-slate-200 flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-brands fa-whatsapp text-emerald-600 text-base"></i>
+                                <h2 class="font-bold text-slate-800 text-xs sm:text-sm">Alertas & Confirmação Automática</h2>
+                            </div>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                MVP • Ganho Rápido
+                            </span>
+                        </div>
+                        <div class="p-4 space-y-3">
+                            <p class="text-xs text-slate-500">
+                                Alertas ativos enviados para evitar visitas perdidas ou desencontros na recepção:
+                            </p>
+                            <div id="client-notifications-list" class="space-y-2.5 max-h-56 overflow-y-auto pr-1">
+                                <div class="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200 text-xs space-y-1">
+                                    <div class="flex items-center justify-between text-[10px] text-emerald-700 font-bold">
+                                        <span><i class="fa-brands fa-whatsapp mr-1"></i>WhatsApp Corporativo</span>
+                                        <span>Hoje, 13:30</span>
+                                    </div>
+                                    <p class="text-slate-700">
+                                        <strong>[ROTA360]</strong> Olá Mariana! O técnico <strong>Rafael Santos</strong> iniciou o deslocamento para TechCorp. Chegada prevista entre <strong>14:00 e 14:40</strong>. Peças da pendência anterior já estão a bordo.
+                                    </p>
+                                </div>
+                                <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1">
+                                    <div class="flex items-center justify-between text-[10px] text-slate-500 font-semibold">
+                                        <span><i class="fa-regular fa-envelope mr-1"></i>E-mail Automático (D-2)</span>
+                                        <span>10/11, 09:00</span>
+                                    </div>
+                                    <p class="text-slate-600">
+                                        Lembrete de vencimento de vida útil dos refis: Visita preventiva confirmada para 12/11 às 14h. Portaria liberada.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                                <button onclick="confirmReceptionAccess()" id="btn-confirm-reception" class="flex-1 py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-2xs">
+                                    <i class="fa-solid fa-door-open"></i> Confirmar Portaria Liberada
+                                </button>
+                                <button onclick="simulateNewAlert()" class="py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-xs transition" title="Simular Disparo de Alerta">
+                                    <i class="fa-solid fa-bell"></i> +Alerta
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. RASTREAMENTO EM TEMPO REAL NO MAPA (FUNCIONALIDADE FUTURA - FASE 2) -->
+                    <div class="future-feature-card bg-white rounded-2xl shadow-sm border-2 border-dashed border-purple-300 overflow-hidden">
+                        <div class="bg-purple-50 px-4 py-3 border-b border-purple-200 flex flex-wrap items-center justify-between gap-1">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-map-location-dot text-purple-700"></i>
+                                <h2 class="font-bold text-purple-950 text-xs sm:text-sm">Rastreamento GPS ao Vivo no Mapa</h2>
+                            </div>
+                            <!-- TAG DE FUNCIONALIDADE FUTURA -->
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-purple-600 text-white shadow-2xs uppercase tracking-wide">
+                                <i class="fa-solid fa-clock-rotate-left"></i> Funcionalidade Futura • Fase 2
+                            </span>
+                        </div>
+
+                        <div class="p-4 space-y-3">
+                            <div class="text-[11px] text-purple-900 bg-purple-100/70 px-3 py-2 rounded-lg border border-purple-200 flex items-center justify-between">
+                                <span><strong>Escopo:</strong> Alto Impacto / Alto Esforço (Telemetria GPS ao vivo)</span>
+                                <button onclick="openRoadmapModal('Rastreamento em Tempo Real no Mapa (Fase 2)', 'Permite que o cliente acompanhe no mapa o deslocamento exato do veículo da equipe técnica a caminho do atendimento.', 'Alto', 'Alto (APIs de Geolocalização Contínua e Mobile Background)', 'Classificado como Projeto Maior (Fase 2): no MVP, a dor de previsibilidade é resolvida com baixo esforço através do Painel de Status + Notificações de Janela de Horário.', 'Simulação de telemetria GPS ativada: Técnico Rafael Santos está a 1,8 km (Av. Presidente Vargas), velocidade média 28 km/h, sem retenções críticas no trajeto.')" class="text-purple-700 font-bold underline hover:text-purple-900 ml-2 shrink-0">
+                                    Ver Detalhes
+                                </button>
+                            </div>
+
+                            <!-- Mapa Vetorial Simulado -->
+                            <div class="relative h-44 rounded-xl bg-slate-900 overflow-hidden border border-slate-300 flex items-center justify-center">
+                                <!-- Grade de Ruas Estilizada em SVG -->
+                                <svg class="w-full h-full opacity-35" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
+                                    <rect width="400" height="200" fill="#0f172a"/>
+                                    <path d="M 0 40 L 400 40 M 0 90 L 400 90 M 0 150 L 400 150 M 70 0 L 70 200 M 160 0 L 160 200 M 260 0 L 260 200 M 340 0 L 340 200" stroke="#334155" stroke-width="4"/>
+                                    <path d="M 0 180 Q 150 120 260 90 T 380 30" stroke="#475569" stroke-width="8" fill="none"/>
+                                    <!-- Rota Otimizada Destacada -->
+                                    <path d="M 70 150 L 160 150 L 160 90 L 300 90" stroke="#38bdf8" stroke-width="4" stroke-dasharray="6,6" fill="none"/>
+                                </svg>
+
+                                <!-- Marcador Técnico em Movimento -->
+                                <div class="absolute left-1/3 top-1/2 -translate-y-1/2 flex flex-col items-center">
+                                    <div class="px-2 py-0.5 rounded bg-cyan-500 text-slate-950 font-bold text-[10px] shadow mb-1 whitespace-nowrap">
+                                        <i class="fa-solid fa-truck-fast mr-1"></i>Rafael (1,8 km)
+                                    </div>
+                                    <div class="w-4 h-4 rounded-full bg-cyan-400 border-2 border-white pulse-marker"></div>
+                                </div>
+
+                                <!-- Marcador Destino Cliente -->
+                                <div class="absolute right-12 top-1/3 flex flex-col items-center">
+                                    <div class="px-2 py-0.5 rounded bg-emerald-500 text-white font-bold text-[10px] shadow mb-1">
+                                        TechCorp (Você)
+                                    </div>
+                                    <div class="w-4 h-4 rounded-full bg-emerald-500 border-2 border-white"></div>
+                                </div>
+
+                                <!-- Overlay de Funcionalidade Futura -->
+                                <div class="absolute bottom-2 inset-x-2 bg-slate-900/90 backdrop-blur-xs border border-purple-500/40 rounded-lg p-2 flex items-center justify-between text-[11px] text-white">
+                                    <span><i class="fa-solid fa-satellite-dish text-purple-400 mr-1.5"></i>Conceito Fase 2: Telemetria GPS</span>
+                                    <button onclick="openRoadmapModal('Rastreamento em Tempo Real no Mapa (Fase 2)', 'Permite que o cliente acompanhe no mapa o deslocamento exato do veículo da equipe técnica a caminho do atendimento.', 'Alto', 'Alto', 'Priorizado para a Fase 2 após validação do MVP para manter o desenvolvimento inicial enxuto.', 'Simulação GPS: Técnico a 6 minutos do endereço do cliente.')" class="px-2 py-1 bg-purple-600 hover:bg-purple-500 rounded text-[10px] font-bold transition">
+                                        Testar Conceito
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 5. AVALIAÇÃO DE SATISFAÇÃO (CSAT - MÉTRICA DE VALIDAÇÃO DO MVP) -->
+                    <div class="mvp-feature-card bg-white rounded-2xl shadow-sm border border-slate-200 p-4 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-800"><i class="fa-solid fa-star text-amber-400 mr-1.5"></i>Validação CSAT do Atendimento</span>
+                            <span class="text-[10px] font-bold text-brand-700 bg-brand-50 px-2 py-0.5 rounded border border-brand-200">Meta MVP: ≥ 8/10</span>
+                        </div>
+                        <p class="text-xs text-slate-500">
+                            De 0 a 10, como você avalia a previsibilidade e transparência das informações da visita de hoje?
+                        </p>
+                        <div class="grid grid-cols-6 sm:grid-cols-11 gap-1" id="csat-buttons">
+                            <!-- Gerado via JS de 0 a 10 -->
+                        </div>
+                        <div id="csat-feedback-msg" class="hidden text-xs font-semibold text-emerald-700 bg-emerald-50 p-2.5 rounded-lg border border-emerald-200 text-center">
+                            Obrigado, Mariana! Sua nota alimenta o indicador de Satisfação do MVP.
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ======================================================================= -->
+        <!-- VISÃO 2: OPERADOR / TÉCNICO (RAFAEL SANTOS & PROGRAMAÇÃO DE ROTAS)      -->
+        <!-- ======================================================================= -->
+        <section id="view-operador" class="space-y-6 hidden">
+
+            <!-- Banner da Persona Operador / Técnico -->
+            <div class="bg-slate-900 text-white rounded-2xl p-5 shadow-md border border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div class="flex items-start sm:items-center gap-4">
+                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 text-white flex items-center justify-center text-xl font-bold shadow-sm shrink-0">
+                        RS
+                    </div>
+                    <div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="text-xs font-bold uppercase tracking-wider text-cyan-300 bg-cyan-950 px-2.5 py-0.5 rounded-md border border-cyan-700">
+                                Perfil: Operador Logístico & Técnico de Campo
+                            </span>
+                            <span class="text-xs text-slate-300 font-medium">• Micro-região: Centro / Zona Sul (Cluster #01)</span>
+                        </div>
+                        <h1 class="text-xl font-bold text-white mt-1">Rafael Santos <span class="text-sm font-normal text-slate-300">(Técnico Sênior & Gestão da Carteira Recorrente)</span></h1>
+                        <p class="text-xs text-slate-300 mt-0.5">
+                            <i class="fa-solid fa-bullseye text-cyan-400 mr-1"></i>
+                            <strong>Objetivo da Persona:</strong> Receber rotas otimizadas por região, consultar histórico/peças antes de sair para evitar retornos e registrar o atendimento rapidamente.
+                        </p>
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end border-t md:border-t-0 pt-3 md:pt-0 border-slate-800">
+                    <div class="bg-slate-800 px-3.5 py-2 rounded-xl border border-slate-700 text-left">
+                        <span class="text-[10px] uppercase tracking-wider text-slate-400 block">Economia na Rota Hoje</span>
+                        <span id="operator-km-saved" class="text-sm font-extrabold text-emerald-400">-24% KM • -35% Tempo Planej.</span>
+                    </div>
+                    <button onclick="switchTab('cliente')" class="px-3.5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold transition flex items-center gap-2 shadow-sm">
+                        <i class="fa-solid fa-eye"></i>
+                        Ver Impacto na Tela da Cliente
+                    </button>
+                </div>
+            </div>
+
+            <!-- Grid Principal do Operador -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+                <!-- Coluna Esquerda: Sugestão Automática de Rotas + Agenda do Dia (5 colunas) -->
+                <div class="lg:col-span-5 space-y-6">
+
+                    <!-- 1. SUGESTÃO AUTOMÁTICA DE ROTAS & INTELIGÊNCIA DA CARTEIRA (MVP - GANHO RÁPIDO) -->
+                    <div class="mvp-feature-card bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="bg-slate-50 px-5 py-3.5 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-route text-brand-600"></i>
+                                <h2 class="font-bold text-slate-800 text-sm">Sugestão Automática de Rotas (Carteira)</h2>
+                            </div>
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                                MVP • Ganho Rápido
+                            </span>
+                        </div>
+
+                        <div class="p-4 space-y-4">
+                            <div class="bg-brand-50/70 border border-brand-200 rounded-xl p-3 text-xs space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-bold text-brand-900"><i class="fa-solid fa-layer-group mr-1"></i>Cluster Geográfico: Centro (Raio 2,5 km)</span>
+                                    <span id="route-optimization-badge" class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-bold text-[10px]">
+                                        Rota Padrão
+                                    </span>
+                                </div>
+                                <p class="text-slate-600 leading-relaxed">
+                                    4 clientes da carteira atingiram o ciclo de troca de refil (180 dias) ou possuem pendência na mesma micro-região.
+                                </p>
+                                <button onclick="optimizeOperatorRoute()" id="btn-optimize-route" class="w-full py-2.5 px-4 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-lg text-xs transition flex items-center justify-center gap-2 shadow-sm">
+                                    <i class="fa-solid fa-wand-sparkles"></i>
+                                    Aplicar Sequenciamento Inteligente de Rota (MVP)
+                                </button>
+                            </div>
+
+                            <!-- 2. ROTEIRIZAÇÃO E AGENDA ORGANIZADA DO TÉCNICO (MVP - GANHO RÁPIDO) -->
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between text-xs">
+                                    <span class="font-bold text-slate-700">Sequência de Visitas Programadas Hoje:</span>
+                                    <span class="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                                        MVP • Ganho Rápido
+                                    </span>
+                                </div>
+
+                                <div id="operator-agenda-list" class="space-y-2.5">
+                                    <!-- Renderizado via JS -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. MODELAGEM PREDITIVA E AÇÕES PROATIVAS (FUNCIONALIDADE FUTURA - IA ESTRATÉGICA) -->
+                    <div class="future-feature-card bg-white rounded-2xl shadow-sm border-2 border-dashed border-purple-300 overflow-hidden">
+                        <div class="bg-purple-50 px-4 py-3 border-b border-purple-200 flex flex-wrap items-center justify-between gap-2">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-brain text-purple-700"></i>
+                                <h2 class="font-bold text-purple-950 text-xs sm:text-sm">Modelagem Preditiva da Carteira (IA)</h2>
+                            </div>
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-purple-600 text-white uppercase">
+                                <i class="fa-solid fa-microchip"></i> Funcionalidade Futura • IA Estratégica
+                            </span>
+                        </div>
+                        <div class="p-4 space-y-3 text-xs">
+                            <p class="text-slate-600">
+                                Algoritmo preditivo que cruza volume de consumo e histórico para prever saturação precoce do refil antes de abrir chamado corretivo:
+                            </p>
+                            <div class="p-3 rounded-xl bg-purple-50/70 border border-purple-200 space-y-1.5">
+                                <div class="flex items-center justify-between font-bold text-purple-950">
+                                    <span><i class="fa-solid fa-bolt text-amber-500 mr-1"></i>Alerta Preditivo: Hospital Santa Lúcia</span>
+                                    <span class="text-[10px] bg-red-100 text-red-700 px-2 py-0.5 rounded font-extrabold">Risco de Saturação: 89%</span>
+                                </div>
+                                <p class="text-slate-600 text-[11px]">
+                                    Embora o vencimento contratual seja em 25 dias, o padrão de vazão indica queda de pressão iminente na próxima semana.
+                                </p>
+                                <button onclick="openRoadmapModal('Modelagem Preditiva e Ações Proativas (IA)', 'Algoritmo preditivo que analisa o histórico de manutenções e o perfil de uso para identificar antecipadamente clientes com alto risco de falhas e pendências.', 'Alto', 'Alto (Machine Learning sobre Histórico da Carteira)', 'Classificado como Projeto Estratégico de IA (Fase Futura) na Matriz de Esforço x Impacto: requer massa de dados estruturada coletada primeiro pelo MVP.', 'Simulação IA Preditiva: Sugestão enviada para antecipar a visita preventiva do Hospital Santa Lúcia aproveitando a rota da Zona Sul de sexta-feira.')" class="mt-1 w-full py-1.5 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg text-[11px] transition">
+                                    Simular Antecipação Proativa (Roadmap IA)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Coluna Direita: Execução da Ordem de Serviço Selecionada + Check-in/Foto + Copiloto IA (7 colunas) -->
+                <div class="lg:col-span-7 space-y-6">
+
+                    <!-- 4. PRONTUÁRIO TÉCNICO, PEÇAS E EXECUÇÃO CHECK-IN/CHECK-OUT (MVP - GANHO RÁPIDO & PRIORIDADE PRIMÁRIA) -->
+                    <div class="mvp-feature-card bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="bg-slate-900 text-white px-5 py-4 flex flex-wrap items-center justify-between gap-2">
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="px-2 py-0.5 rounded bg-cyan-500 text-slate-950 font-extrabold text-xs">OS #4092 ATIVA</span>
+                                    <span class="text-xs text-slate-300">Cliente: <strong>TechCorp S.A. (Mariana Oliveira)</strong></span>
+                                </div>
+                                <h2 class="font-bold text-base mt-1">Execução em Campo: Prontuário, Peças & Fechamento Fotográfico</h2>
+                            </div>
+                            <div class="flex flex-col items-end gap-1">
+                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-400 text-slate-950">
+                                    MVP • Ganho Rápido & Prioridade Primária
+                                </span>
+                                <span class="text-[10px] text-cyan-300">
+                                    <i class="fa-solid fa-link mr-1"></i>Sincronizado com a Visão Cliente
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="p-5 space-y-5">
+
+                            <!-- Prontuário e Checklist Pré-Deslocamento de Peças (Evita Visita Improdutiva) -->
+                            <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-3">
+                                <div class="flex flex-wrap items-center justify-between gap-2">
+                                    <div class="flex items-center gap-2">
+                                        <i class="fa-solid fa-toolbox text-amber-700"></i>
+                                        <h3 class="font-bold text-amber-950 text-xs sm:text-sm">Prontuário & Checklist de Peças Obrigatórias (Pré-Deslocamento)</h3>
+                                    </div>
+                                    <span class="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded border border-emerald-300">
+                                        MVP • Prioridade Primária
+                                    </span>
+                                </div>
+                                <p class="text-xs text-amber-900">
+                                    <strong>Histórico da Última Visita (OS #3108):</strong> Identificada oscilação na pressão de entrada da Copa Central. Necessário substituir válvula reguladora junto com a troca semestral dos refis.
+                                </p>
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+                                    <label class="flex items-center gap-2 p-2.5 rounded-lg bg-white border border-amber-200 text-xs font-medium text-slate-800 cursor-pointer">
+                                        <input type="checkbox" checked class="rounded text-brand-600 focus:ring-brand-500" onchange="updatePartsCheck()">
+                                        <span>2x Refil AcquaPure C+3</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 p-2.5 rounded-lg bg-white border border-amber-300 text-xs font-bold text-amber-950 cursor-pointer ring-1 ring-amber-400">
+                                        <input type="checkbox" checked class="rounded text-brand-600 focus:ring-brand-500" onchange="updatePartsCheck()">
+                                        <span>1x Válvula Pressão 1/4" (Pendência)</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 p-2.5 rounded-lg bg-white border border-amber-200 text-xs font-medium text-slate-800 cursor-pointer">
+                                        <input type="checkbox" checked class="rounded text-brand-600 focus:ring-brand-500" onchange="updatePartsCheck()">
+                                        <span>Manômetro de Teste</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Controle de Status em Tempo Real (Check-in, Evidência Fotográfica e Check-out) -->
+                            <div class="border border-slate-200 rounded-xl p-4 space-y-4 bg-slate-50/50">
+                                <div class="flex flex-wrap items-center justify-between gap-2">
+                                    <div>
+                                        <h3 class="font-bold text-slate-800 text-sm">Fluxo Operacional: Check-in, Foto Obrigatória e Check-out</h3>
+                                        <p class="text-xs text-slate-500">Alterações abaixo atualizam instantaneamente o painel da cliente Mariana Oliveira.</p>
+                                    </div>
+                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                        MVP • Ganho Rápido
+                                    </span>
+                                </div>
+
+                                <!-- Botões de Etapa Operacional -->
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                                    <button onclick="operatorCheckIn()" id="btn-op-checkin" class="py-2.5 px-3 rounded-xl font-bold text-xs border transition flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 text-white border-brand-700 shadow-xs">
+                                        <i class="fa-solid fa-location-crosshairs"></i>
+                                        1. Fazer Check-in no Local
+                                    </button>
+
+                                    <button onclick="operatorCapturePhoto()" id="btn-op-photo" class="py-2.5 px-3 rounded-xl font-bold text-xs border transition flex items-center justify-center gap-2 bg-white hover:bg-slate-100 text-slate-700 border-slate-300">
+                                        <i class="fa-solid fa-camera"></i>
+                                        2. Anexar Foto Instalação
+                                    </button>
+
+                                    <button onclick="operatorCheckOut()" id="btn-op-checkout" class="py-2.5 px-3 rounded-xl font-bold text-xs border transition flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-700 shadow-xs">
+                                        <i class="fa-solid fa-clipboard-check"></i>
+                                        3. Concluir & Check-out
+                                    </button>
+                                </div>
+
+                                <!-- Preview da Foto Anexada e Observações do Fechamento -->
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                                    <div id="photo-preview-box" onclick="operatorCapturePhoto()" class="cursor-pointer border-2 border-dashed border-slate-300 hover:border-brand-500 rounded-xl p-3 flex flex-col items-center justify-center text-center bg-white transition">
+                                        <i id="photo-icon" class="fa-solid fa-camera text-slate-400 text-xl mb-1"></i>
+                                        <span id="photo-status-text" class="text-[11px] font-semibold text-slate-600">Foto Obrigatória Pendente</span>
+                                        <span class="text-[10px] text-slate-400">Clique para simular captura</span>
+                                    </div>
+
+                                    <div class="sm:col-span-2 space-y-2">
+                                        <div class="flex items-center justify-between text-xs">
+                                            <label class="font-bold text-slate-700">Resultado da Visita & Observações Técnicas:</label>
+                                            <select id="operator-outcome-select" class="text-xs border border-slate-300 rounded-lg px-2 py-1 bg-white font-semibold text-slate-800">
+                                                <option value="concluido">Concluído 100% (Sem Pendências)</option>
+                                                <option value="pendencia">Concluído Parcial (Gerar Nova Pendência)</option>
+                                            </select>
+                                        </div>
+                                        <textarea id="operator-notes-input" rows="2" class="w-full text-xs rounded-xl border border-slate-300 p-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-brand-500">Refis C+3 substituídos e válvula reguladora de pressão 1/4" instalada. Teste de vazão e estanqueidade 100% normalizado.</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Grid Inferior Direito: Copiloto IA + Painel de Metas do Técnico -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                        <!-- 5. ASSISTENTE EM TEMPO REAL NO PONTO DE ATENDIMENTO (FUNCIONALIDADE FUTURA - IA ESTRATÉGICA) -->
+                        <div class="future-feature-card bg-white rounded-2xl shadow-sm border-2 border-dashed border-purple-300 overflow-hidden flex flex-col justify-between">
+                            <div>
+                                <div class="bg-purple-50 px-4 py-3 border-b border-purple-200 flex items-center justify-between gap-1">
+                                    <div class="flex items-center gap-1.5">
+                                        <i class="fa-solid fa-robot text-purple-700"></i>
+                                        <h3 class="font-bold text-purple-950 text-xs">Assistente Copiloto em Campo (IA)</h3>
+                                    </div>
+                                    <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-purple-600 text-white uppercase">
+                                        Funcionalidade Futura • IA
+                                    </span>
+                                </div>
+                                <div class="p-4 space-y-2.5 text-xs">
+                                    <p class="text-slate-600 text-[11px]">
+                                        Suporte copiloto para diagnóstico rápido de falhas e consulta guiada ao manual do purificador durante o atendimento:
+                                    </p>
+                                    <div id="ai-copilot-chat" class="bg-slate-900 text-slate-200 p-3 rounded-xl text-[11px] space-y-2 font-mono">
+                                        <div class="text-purple-300 font-bold">> Copiloto ROTA360 pronto.</div>
+                                        <div id="ai-copilot-response" class="text-slate-300">Selecione uma dúvida rápida abaixo para simular o suporte em tempo real ao técnico.</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-4 pt-0 space-y-1.5">
+                                <button onclick="simulateAICopilot('pressao')" class="w-full text-left px-3 py-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-900 border border-purple-200 text-[11px] font-semibold transition flex items-center justify-between">
+                                    <span>"Purificador AcquaPure com baixa vazão após troca"</span>
+                                    <i class="fa-solid fa-paper-plane text-purple-600"></i>
+                                </button>
+                                <button onclick="openRoadmapModal('Assistente em Tempo Real no Ponto de Atendimento (IA)', 'Suporte copiloto em tempo real para os técnicos durante a execução do serviço, fornecendo diagnósticos rápidos de falhas e acesso ao histórico técnico.', 'Alto', 'Alto (LLM + Base de Manuais Técnicos)', 'Mapeado como Projeto Estratégico de IA (Fase Futura).', 'Copiloto IA: Recomenda purga de ar de 3 litros no elemento filtrante de carvão ativado e calibragem da válvula em 28 PSI.')" class="w-full text-center py-1 text-[10px] font-bold text-purple-700 hover:underline">
+                                    Ver detalhes da Funcionalidade Futura
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 6. PAINEL DE METAS E DESEMPENHO DO TÉCNICO (FUNCIONALIDADE FUTURA - 2ª ORDEM / MELHORIA CONTÍNUA) -->
+                        <div class="future-feature-card bg-white rounded-2xl shadow-sm border-2 border-dashed border-indigo-300 overflow-hidden flex flex-col justify-between">
+                            <div>
+                                <div class="bg-indigo-50 px-4 py-3 border-b border-indigo-200 flex items-center justify-between gap-1">
+                                    <div class="flex items-center gap-1.5">
+                                        <i class="fa-solid fa-chart-line text-indigo-700"></i>
+                                        <h3 class="font-bold text-indigo-950 text-xs">Painel de Metas & Desempenho</h3>
+                                    </div>
+                                    <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-indigo-600 text-white uppercase">
+                                        Funcionalidade Futura • 2ª Ordem
+                                    </span>
+                                </div>
+                                <div class="p-4 space-y-3 text-xs">
+                                    <p class="text-slate-600 text-[11px]">
+                                        Gamificação e acompanhamento individual de metas semanais, SLA de pontualidade e resolução na primeira visita:
+                                    </p>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                                            <span class="text-[10px] text-slate-400 block">Visitas Concluídas Hoje</span>
+                                            <span id="tech-kpi-completed" class="text-base font-extrabold text-slate-800">2 / 4</span>
+                                        </div>
+                                        <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                                            <span class="text-[10px] text-slate-400 block">Pontualidade (SLA)</span>
+                                            <span class="text-base font-extrabold text-emerald-600">96,4%</span>
+                                        </div>
+                                    </div>
+                                    <div class="space-y-1">
+                                        <div class="flex justify-between text-[11px] font-semibold">
+                                            <span>Meta Semanal de Trocas de Refil</span>
+                                            <span class="text-indigo-700">28 / 32 (87%)</span>
+                                        </div>
+                                        <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                                            <div class="bg-indigo-600 h-full rounded-full" style="width: 87%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-4 pt-0">
+                                <button onclick="openRoadmapModal('Painel de Metas e Desempenho do Técnico', 'Visualização individual de metas diárias/semanais de atendimentos, indicadores de pontualidade e taxa de conclusão de serviços.', 'Médio', 'Médio', 'Classificado como Tarefa de Segunda Ordem / Melhoria Contínua.', 'Módulo planejado para evolução contínua após estabilização do fluxo básico de roteirização e check-in do MVP.')" class="w-full py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 rounded-lg text-[11px] font-bold transition">
+                                    Por que é Funcionalidade de 2ª Ordem?
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ======================================================================= -->
+        <!-- VISÃO 3: QUADRO-RESUMO DOS INDICADORES DE VALIDAÇÃO DO MVP              -->
+        <!-- ======================================================================= -->
+        <section id="view-matriz" class="space-y-6 hidden">
+            
+            <!-- Quadro-Resumo dos 8 Indicadores de Validação do MVP -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                    <div>
+                        <span class="text-xs font-bold uppercase tracking-wider text-brand-600 bg-brand-50 px-2.5 py-1 rounded-md border border-brand-200">
+                            Métricas de Validação do MVP
+                        </span>
+                        <h1 class="text-xl sm:text-2xl font-extrabold text-slate-900 mt-1.5">Quadro-Resumo dos Indicadores</h1>
+                        <p class="text-xs sm:text-sm text-slate-600 mt-0.5">
+                            Metas quantitativas estabelecidas para validar a eficácia operacional, financeira e de satisfação do cliente no projeto-piloto.
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button onclick="switchTab('cliente')" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition">
+                            Ir para Cliente
+                        </button>
+                        <button onclick="switchTab('operador')" class="px-3.5 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold transition">
+                            Ir para Operador
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="p-5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                        <div class="flex items-center justify-between text-xs font-semibold text-slate-500">
+                            <span>Redução do tempo de planejamento</span>
+                            <i class="fa-solid fa-stopwatch text-brand-600 text-sm"></i>
+                        </div>
+                        <div class="text-3xl font-extrabold text-slate-900">≥ 30%</div>
+                        <p class="text-xs text-emerald-700 font-semibold">Diminuição do tempo para organizar agendas e definir trajetos</p>
+                    </div>
+
+                    <div class="p-5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                        <div class="flex items-center justify-between text-xs font-semibold text-slate-500">
+                            <span>Redução dos custos de deslocamento</span>
+                            <i class="fa-solid fa-gas-pump text-brand-600 text-sm"></i>
+                        </div>
+                        <div class="text-3xl font-extrabold text-slate-900">≥ 20%</div>
+                        <p class="text-xs text-emerald-700 font-semibold">Economia com combustível, transporte e quilometragem</p>
+                    </div>
+
+                    <div class="p-5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                        <div class="flex items-center justify-between text-xs font-semibold text-slate-500">
+                            <span>Cumprimento dos agendamentos</span>
+                            <i class="fa-solid fa-calendar-check text-brand-600 text-sm"></i>
+                        </div>
+                        <div class="text-3xl font-extrabold text-slate-900">≥ 90%</div>
+                        <p class="text-xs text-emerald-700 font-semibold">Atendimentos realizados dentro dos prazos e horários estabelecidos</p>
+                    </div>
+
+                    <div class="p-5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                        <div class="flex items-center justify-between text-xs font-semibold text-slate-500">
+                            <span>Aumento da produtividade</span>
+                            <i class="fa-solid fa-helmet-safety text-brand-600 text-sm"></i>
+                        </div>
+                        <div class="text-3xl font-extrabold text-slate-900">≥ 25%</div>
+                        <p class="text-xs text-emerald-700 font-semibold">Elevação na quantidade de atendimentos realizados por equipe</p>
+                    </div>
+
+                    <div class="p-5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                        <div class="flex items-center justify-between text-xs font-semibold text-slate-500">
+                            <span>Satisfação dos clientes</span>
+                            <i class="fa-solid fa-face-smile text-brand-600 text-sm"></i>
+                        </div>
+                        <div class="text-3xl font-extrabold text-slate-900">≥ 8/10</div>
+                        <p class="text-xs text-emerald-700 font-semibold">Avaliação de pontualidade, comunicação e previsibilidade</p>
+                    </div>
+
+                    <div class="p-5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                        <div class="flex items-center justify-between text-xs font-semibold text-slate-500">
+                            <span>Adoção da solução</span>
+                            <i class="fa-solid fa-mobile-screen-button text-brand-600 text-sm"></i>
+                        </div>
+                        <div class="text-3xl font-extrabold text-slate-900">≥ 70%</div>
+                        <p class="text-xs text-emerald-700 font-semibold">Adesão dos colaboradores participantes durante o projeto-piloto</p>
+                    </div>
+
+                    <div class="p-5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                        <div class="flex items-center justify-between text-xs font-semibold text-slate-500">
+                            <span>Redução de visitas improdutivas</span>
+                            <i class="fa-solid fa-ban text-brand-600 text-sm"></i>
+                        </div>
+                        <div class="text-3xl font-extrabold text-slate-900">≥ 20%</div>
+                        <p class="text-xs text-emerald-700 font-semibold">Menos retornos e retrabalhos por falta de peças ou informações</p>
+                    </div>
+
+                    <div class="p-5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                        <div class="flex items-center justify-between text-xs font-semibold text-slate-500">
+                            <span>Retenção de clientes</span>
+                            <i class="fa-solid fa-handshake text-brand-600 text-sm"></i>
+                        </div>
+                        <div class="text-3xl font-extrabold text-slate-900">≥ 90%</div>
+                        <p class="text-xs text-emerald-700 font-semibold">Manutenção e fidelização dos contratos de serviços recorrentes</p>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- RODAPÉ ACADÊMICO DO PROTÓTIPO -->
+    <footer class="bg-white border-t border-slate-200 mt-auto py-4 px-4 sm:px-6 lg:px-8 text-xs text-slate-500">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+            <div>
+                <strong>ROTA360</strong> – Solução para Digitalização da Logística de Manutenção e Experiência do Cliente (Trilha 2: Produto ou Relato Técnico)
+            </div>
+            <div class="text-slate-400">
+                Caroline Lopes da Silva • Gilson José Castro Ramos • Stefanni Marcello de Santana • Vinicius Batalha Palma
+            </div>
+        </div>
+    </footer>
+
+    <!-- LÓGICA JAVASCRIPT E ESTADO COMPARTILHADO ENTRE PERFIS -->
+    <script>
+        // Estado centralizado do protótipo (sincroniza Visão Cliente e Visão Operador)
+        const appState = {
+            currentTab: 'cliente',
+            scopeFilter: 'all',
+            // Steps da OS #4092: 1=Agendado, 2=Peças Separadas, 3=Técnico em Rota, 4=Em Atendimento (Check-in), 5=Concluído (Check-out)
+            osStep: 3,
+            photoAttached: false,
+            routeOptimized: false,
+            receptionConfirmed: false,
+            lastUpdated: '13:45',
+            techNotes: 'Refis C+3 substituídos e válvula reguladora de pressão 1/4" instalada. Teste de vazão e estanqueidade 100% normalizado.',
+            outcome: 'concluido',
+            agendaItems: [
+                {
+                    id: 'OS #4089',
+                    seq: 1,
+                    client: 'Clínica Vida Plena',
+                    address: 'Rua da Assembleia, 88 - Centro (0,6 km)',
+                    service: 'Troca preventiva 3x Refis Purificador',
+                    priority: 'Concluído às 11:40',
+                    priorityColor: 'bg-emerald-100 text-emerald-800',
+                    status: 'done'
+                },
+                {
+                    id: 'OS #4092',
+                    seq: 2,
+                    client: 'TechCorp S.A. (Mariana Oliveira)',
+                    address: 'Av. Rio Branco, 156 - Centro (0,4 km)',
+                    service: '2x Refis Industriais + Válvula 1/4" (Pendência)',
+                    priority: 'Prioridade Alta • SLA 14:00-14:40',
+                    priorityColor: 'bg-amber-100 text-amber-900 border border-amber-300',
+                    status: 'active'
+                },
+                {
+                    id: 'OS #4098',
+                    seq: 3,
+                    client: 'Condomínio Edifício Comercial Sul',
+                    address: 'Av. Beira Mar, 400 - Centro (3,9 km)',
+                    service: 'Vencimento Semestral Refil Carvão Ativado',
+                    priority: 'Preventiva Carteira • 16:00',
+                    priorityColor: 'bg-slate-100 text-slate-700',
+                    status: 'pending'
+                },
+                {
+                    id: 'OS #4095',
+                    seq: 4,
+                    client: 'Escritório Advocacia Mendes',
+                    address: 'Rua Sete de Setembro, 92 - Centro (0,5 km da TechCorp)',
+                    service: 'Troca Recorrente Refil + Higienização',
+                    priority: 'Preventiva Carteira • 15:00',
+                    priorityColor: 'bg-blue-100 text-blue-800',
+                    status: 'pending'
+                }
+            ]
+        };
+
+        // Definição dos 5 passos do Stepper do Cliente
+        const stepDefinitions = [
+            { step: 1, label: '1. Agendado', desc: 'Janela confirmada', icon: 'fa-calendar-check' },
+            { step: 2, label: '2. Peças no Veículo', desc: 'Refis + Válvula 1/4"', icon: 'fa-box-open' },
+            { step: 3, label: '3. Técnico em Rota', desc: 'Rafael a caminho', icon: 'fa-truck-fast' },
+            { step: 4, label: '4. Em Atendimento', desc: 'Check-in no local', icon: 'fa-screwdriver-wrench' },
+            { step: 5, label: '5. Concluído', desc: 'Foto + Check-out', icon: 'fa-circle-check' }
+        ];
+
+        // Alternância entre as 3 abas principais (Cliente, Operador, Matriz)
+        function switchTab(tabName) {
+            appState.currentTab = tabName;
+            const tabs = ['cliente', 'operador', 'matriz'];
+            tabs.forEach(t => {
+                const section = document.getElementById(`view-${t}`);
+                const btn = document.getElementById(`tab-btn-${t}`);
+                if (t === tabName) {
+                    section.classList.remove('hidden');
+                    btn.className = 'flex-1 sm:flex-initial flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-cyan-500 text-slate-950 shadow-sm';
+                } else {
+                    section.classList.add('hidden');
+                    btn.className = 'flex-1 sm:flex-initial flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all text-slate-200 hover:text-white hover:bg-brand-700/60';
+                }
+            });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Filtro visual entre Escopo MVP e Funcionalidades Futuras
+        function setScopeFilter(scope) {
+            appState.scopeFilter = scope;
+            const wrapper = document.getElementById('main-content-wrapper');
+            wrapper.classList.remove('highlight-mvp', 'highlight-future');
+
+            document.getElementById('filter-all').className = 'px-2.5 py-1 rounded-md bg-slate-800 text-slate-300 hover:bg-slate-700 font-medium transition text-[11px]';
+            document.getElementById('filter-mvp').className = 'px-2.5 py-1 rounded-md bg-emerald-950/80 text-emerald-300 border border-emerald-700/60 hover:bg-emerald-900/80 font-medium transition text-[11px] flex items-center gap-1.5';
+            document.getElementById('filter-future').className = 'px-2.5 py-1 rounded-md bg-purple-950/80 text-purple-300 border border-purple-700/60 hover:bg-purple-900/80 font-medium transition text-[11px] flex items-center gap-1.5';
+
+            if (scope === 'mvp') {
+                wrapper.classList.add('highlight-mvp');
+                document.getElementById('filter-mvp').className = 'px-2.5 py-1 rounded-md bg-emerald-500 text-slate-950 font-bold transition text-[11px] flex items-center gap-1.5 shadow-xs';
+                openToast('Destacando apenas as 6 funcionalidades do escopo MVP (Ganhos Rápidos e Prioridade Primária).', 'info');
+            } else if (scope === 'future') {
+                wrapper.classList.add('highlight-future');
+                document.getElementById('filter-future').className = 'px-2.5 py-1 rounded-md bg-purple-500 text-white font-bold transition text-[11px] flex items-center gap-1.5 shadow-xs';
+                openToast('Destacando as 4 Funcionalidades Futuras mapeadas no Roadmap (Fase 2, IA e 2ª Ordem).', 'info');
+            } else {
+                document.getElementById('filter-all').className = 'px-2.5 py-1 rounded-md bg-slate-700 text-white font-semibold transition text-[11px]';
+            }
+        }
+
+        // Renderiza o Stepper na Visão Cliente e atualiza badges sincronizados
+        function renderClientStepper() {
+            const container = document.getElementById('client-stepper-container');
+            container.innerHTML = '';
+
+            stepDefinitions.forEach(item => {
+                const isCompleted = item.step < appState.osStep || (appState.osStep === 5 && item.step === 5);
+                const isCurrent = item.step === appState.osStep && appState.osStep !== 5;
+
+                let cardStyle = 'bg-slate-50 border-slate-200 text-slate-400';
+                let iconBadge = 'bg-slate-200 text-slate-500';
+
+                if (isCompleted) {
+                    cardStyle = 'bg-emerald-50/90 border-emerald-300 text-emerald-900';
+                    iconBadge = 'bg-emerald-600 text-white';
+                } else if (isCurrent) {
+                    cardStyle = 'bg-brand-50 border-brand-500 text-brand-950 ring-2 ring-brand-500/20';
+                    iconBadge = 'bg-brand-600 text-white animate-pulse';
+                }
+
+                container.innerHTML += `
+                    <div class="p-3 rounded-xl border ${cardStyle} flex sm:flex-col items-center sm:items-start gap-3 sm:gap-1.5 transition-all">
+                        <div class="w-7 h-7 rounded-lg ${iconBadge} flex items-center justify-center text-xs shrink-0">
+                            <i class="fa-solid ${isCompleted ? 'fa-check' : item.icon}"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs font-bold leading-tight">${item.label}</div>
+                            <div class="text-[10px] opacity-80 mt-0.5">${item.desc}</div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // Atualiza badge superior de sincronização
+            const globalBadge = document.getElementById('global-os-badge');
+            const currentDef = stepDefinitions.find(d => d.step === appState.osStep);
+            if (appState.osStep === 5) {
+                globalBadge.className = 'px-2.5 py-0.5 rounded-full font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30';
+                globalBadge.innerText = '5. Concluído (Check-out OK)';
+            } else if (appState.osStep === 4) {
+                globalBadge.className = 'px-2.5 py-0.5 rounded-full font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-400/30';
+                globalBadge.innerText = '4. Em Atendimento no Local';
+            } else {
+                globalBadge.className = 'px-2.5 py-0.5 rounded-full font-bold bg-amber-500/20 text-amber-300 border border-amber-400/30';
+                globalBadge.innerText = currentDef.label;
+            }
+
+            document.getElementById('client-last-update').innerText = `Atualizado às ${appState.lastUpdated}`;
+
+            // Atualiza célula da tabela de histórico e box de evidência
+            const historyStatusCell = document.getElementById('history-current-status-cell');
+            const pastPendencyBadge = document.getElementById('past-pendency-badge');
+            const evidenceBox = document.getElementById('client-completion-evidence');
+
+            if (appState.osStep === 4) {
+                historyStatusCell.innerHTML = `<span class="px-2 py-0.5 rounded-full bg-cyan-100 text-cyan-800 font-bold text-[11px]"><i class="fa-solid fa-screwdriver-wrench mr-1"></i>Técnico no Local</span>`;
+                document.getElementById('client-eta-window').innerText = 'Técnico no Local';
+                document.getElementById('client-sla-status').innerHTML = '<i class="fa-solid fa-location-dot mr-0.5"></i> Check-in realizado às ' + appState.lastUpdated;
+            } else if (appState.osStep === 5) {
+                evidenceBox.classList.remove('hidden');
+                document.getElementById('client-tech-notes').innerText = `"${appState.techNotes}"`;
+                document.getElementById('client-checkout-time').innerText = `Check-out e foto registrados às ${appState.lastUpdated} por Rafael Santos.`;
+                document.getElementById('client-eta-window').innerText = 'Visita Finalizada';
+
+                if (appState.outcome === 'concluido') {
+                    historyStatusCell.innerHTML = `<span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[11px]"><i class="fa-solid fa-check-double mr-1"></i>100% Concluído</span>`;
+                    pastPendencyBadge.className = 'px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-semibold text-[11px] inline-flex items-center gap-1';
+                    pastPendencyBadge.innerHTML = `<i class="fa-solid fa-check text-[10px]"></i> Pendência Válvula Resolvida na OS #4092`;
+                    document.getElementById('client-evidence-badge').className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-200 text-emerald-900';
+                    document.getElementById('client-evidence-badge').innerText = 'Concluído Sem Pendências';
+                } else {
+                    historyStatusCell.innerHTML = `<span class="px-2 py-0.5 rounded-full bg-orange-100 text-orange-800 font-bold text-[11px]"><i class="fa-solid fa-clock mr-1"></i>Concluído Parcial (Pendência Aberta)</span>`;
+                    document.getElementById('client-evidence-badge').className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-200 text-amber-900';
+                    document.getElementById('client-evidence-badge').innerText = 'Atenção: Pendência Registrada';
+                }
+            }
+        }
+
+        // Renderiza a Agenda do Técnico na Visão Operador
+        function renderOperatorAgenda() {
+            const listEl = document.getElementById('operator-agenda-list');
+            listEl.innerHTML = '';
+
+            appState.agendaItems.forEach((item, idx) => {
+                const isTechCorp = item.id === 'OS #4092';
+                const borderClass = isTechCorp ? 'border-2 border-brand-500 bg-brand-50/40' : 'border border-slate-200 bg-white';
+                const statusBadge = item.status === 'done'
+                    ? '<span class="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded"><i class="fa-solid fa-check mr-0.5"></i>Finalizada</span>'
+                    : `<span class="text-[10px] font-bold px-2 py-0.5 rounded ${item.priorityColor}">${item.priority}</span>`;
+
+                listEl.innerHTML += `
+                    <div class="p-3 rounded-xl ${borderClass} flex items-start gap-3 transition-all">
+                        <div class="w-7 h-7 rounded-lg ${item.status === 'done' ? 'bg-emerald-600 text-white' : (isTechCorp ? 'bg-brand-600 text-white' : 'bg-slate-200 text-slate-700')} font-extrabold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                            ${idx + 1}º
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex flex-wrap items-center justify-between gap-1">
+                                <span class="text-xs font-bold text-slate-900">${item.id} • ${item.client}</span>
+                                ${statusBadge}
+                            </div>
+                            <p class="text-[11px] text-slate-600 mt-0.5"><i class="fa-solid fa-location-dot text-slate-400 mr-1"></i>${item.address}</p>
+                            <p class="text-[11px] font-medium text-slate-700 mt-0.5">${item.service}</p>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // Funcionalidade MVP: Otimizar Sequência de Rota por Proximidade Geográfica (Clustering)
+        function optimizeOperatorRoute() {
+            if (appState.routeOptimized) {
+                openToast('A rota da micro-região Centro já está otimizada pelo menor deslocamento.', 'info');
+                return;
+            }
+            appState.routeOptimized = true;
+
+            // Troca a ordem da visita 3 e 4 para deixar Rua Sete de Setembro (0,5km da TechCorp) logo após a TechCorp
+            const temp = appState.agendaItems[2];
+            appState.agendaItems[2] = appState.agendaItems[3];
+            appState.agendaItems[3] = temp;
+
+            renderOperatorAgenda();
+
+            const badge = document.getElementById('route-optimization-badge');
+            badge.className = 'px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px]';
+            badge.innerHTML = '<i class="fa-solid fa-check mr-1"></i>Rota Otimizada (-3,4 km)';
+
+            const btn = document.getElementById('btn-optimize-route');
+            btn.className = 'w-full py-2.5 px-4 bg-emerald-600 text-white font-bold rounded-lg text-xs flex items-center justify-center gap-2 cursor-default';
+            btn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Sequência Otimizada por Cluster Geográfico (-24% KM)';
+
+            openToast('Rota reordenada! OS #4095 (0,5 km de distância) movida para 3ª parada, economizando 3,4 km e 18 min no trânsito.', 'success');
+        }
+
+        // Funcionalidade MVP: Operador realiza Check-in no local
+        function operatorCheckIn() {
+            const now = new Date();
+            appState.lastUpdated = now.toTimeString().slice(0, 5);
+            appState.osStep = 4;
+
+            const btnCheckin = document.getElementById('btn-op-checkin');
+            btnCheckin.className = 'py-2.5 px-3 rounded-xl font-bold text-xs border flex items-center justify-center gap-2 bg-emerald-100 text-emerald-900 border-emerald-300';
+            btnCheckin.innerHTML = `<i class="fa-solid fa-check"></i> Check-in Feito (${appState.lastUpdated})`;
+
+            // Adiciona notificação automática na visão do cliente
+            addClientNotification('WhatsApp Corporativo', `Hoje, ${appState.lastUpdated}`, `[ROTA360] O técnico Rafael Santos acabou de realizar o Check-in na TechCorp S.A. Atendimento em andamento.`);
+
+            renderClientStepper();
+            openToast('Check-in registrado! O Painel de Previsibilidade da cliente Mariana foi atualizado para "Em Atendimento".', 'success');
+        }
+
+        // Funcionalidade MVP: Operador captura/anexa foto obrigatória da instalação
+        function operatorCapturePhoto() {
+            appState.photoAttached = true;
+            const previewBox = document.getElementById('photo-preview-box');
+            previewBox.className = 'cursor-pointer border-2 border-emerald-500 rounded-xl p-3 flex flex-col items-center justify-center text-center bg-emerald-50/70 transition';
+            document.getElementById('photo-icon').className = 'fa-solid fa-circle-check text-emerald-600 text-xl mb-1';
+            document.getElementById('photo-status-text').innerText = 'Foto_Purificador_OS4092.jpg';
+            document.getElementById('photo-status-text').className = 'text-[11px] font-bold text-emerald-800';
+
+            const btnPhoto = document.getElementById('btn-op-photo');
+            btnPhoto.className = 'py-2.5 px-3 rounded-xl font-bold text-xs border flex items-center justify-center gap-2 bg-emerald-100 text-emerald-900 border-emerald-300';
+            btnPhoto.innerHTML = '<i class="fa-solid fa-camera-rotate"></i> 2. Foto Anexada OK';
+
+            openToast('Evidência fotográfica da troca de refil e válvula anexada à OS #4092!', 'success');
+        }
+
+        // Funcionalidade MVP: Operador conclui serviço e realiza Check-out
+        function operatorCheckOut() {
+            if (!appState.photoAttached) {
+                operatorCapturePhoto();
+            }
+
+            const now = new Date();
+            appState.lastUpdated = now.toTimeString().slice(0, 5);
+            appState.osStep = 5;
+            appState.techNotes = document.getElementById('operator-notes-input').value;
+            appState.outcome = document.getElementById('operator-outcome-select').value;
+
+            // Atualiza status na agenda do operador
+            const techCorpItem = appState.agendaItems.find(i => i.id === 'OS #4092');
+            if (techCorpItem) {
+                techCorpItem.status = 'done';
+            }
+            renderOperatorAgenda();
+
+            // Atualiza KPI do técnico
+            document.getElementById('tech-kpi-completed').innerText = '3 / 4';
+
+            const btnCheckout = document.getElementById('btn-op-checkout');
+            btnCheckout.className = 'py-2.5 px-3 rounded-xl font-bold text-xs border flex items-center justify-center gap-2 bg-slate-900 text-emerald-400 border-slate-800';
+            btnCheckout.innerHTML = `<i class="fa-solid fa-lock"></i> OS #4092 Concluída (${appState.lastUpdated})`;
+
+            // Envia notificação automática para Mariana
+            const outcomeText = appState.outcome === 'concluido'
+                ? 'Serviço 100% concluído (incluindo válvula pendente). Laudo e foto disponíveis no seu painel!'
+                : 'Atendimento finalizado com registro de pendência para acompanhamento da programação.';
+
+            addClientNotification('WhatsApp & E-mail', `Hoje, ${appState.lastUpdated}`, `[ROTA360] Check-out registrado na OS #4092: ${outcomeText}`);
+
+            renderClientStepper();
+            openToast('Check-out concluído! A Visão da Cliente Mariana já exibe o laudo, a foto e a baixa da pendência.', 'success');
+        }
+
+        function updatePartsCheck() {
+            openToast('Checklist pré-deslocamento atualizado pelo técnico.', 'info');
+        }
+
+        // Funções Interativas da Visão Cliente
+        function confirmReceptionAccess() {
+            appState.receptionConfirmed = true;
+            const btn = document.getElementById('btn-confirm-reception');
+            btn.className = 'flex-1 py-2 px-3 bg-slate-800 text-emerald-400 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-default';
+            btn.innerHTML = '<i class="fa-solid fa-check-double"></i> Portaria Confirmada (Técnico Avisado)';
+            openToast('Confirmação enviada! O técnico Rafael recebeu o aviso de liberação imediata na portaria.', 'success');
+        }
+
+        function simulateNewAlert() {
+            const now = new Date();
+            const timeStr = now.toTimeString().slice(0, 5);
+            addClientNotification('Alerta Automático ROTA360', `Hoje, ${timeStr}`, `[ROTA360] Atualização automática: O técnico Rafael concluiu o atendimento anterior a 400m da sua empresa e mantém a previsão de chegada às 14:00.`);
+            openToast('Novo lembrete automático simulado na caixa de notificações da cliente!', 'info');
+        }
+
+        function addClientNotification(channel, time, text) {
+            const list = document.getElementById('client-notifications-list');
+            const item = document.createElement('div');
+            item.className = 'p-3 rounded-xl bg-brand-50 border border-brand-200 text-xs space-y-1 animate-fade-in';
+            item.innerHTML = `
+                <div class="flex items-center justify-between text-[10px] text-brand-700 font-bold">
+                    <span><i class="fa-solid fa-bell mr-1"></i>${channel}</span>
+                    <span>${time}</span>
+                </div>
+                <p class="text-slate-800">${text}</p>
+            `;
+            list.prepend(item);
+        }
+
+        // Simulação do Assistente Copiloto IA (Funcionalidade Futura)
+        function simulateAICopilot(topic) {
+            const res = document.getElementById('ai-copilot-response');
+            res.innerHTML = `<span class="text-amber-300">[Diagnóstico IA - Purificador AcquaPure Pro]:</span> Baixa vazão pós-troca em 82% dos casos ocorre por ar retido na câmara do refil C+3 ou reguladora abaixo de 25 PSI. <br><span class="text-emerald-300">Ação recomendada:</span> Drenar 3L com registro aberto em 100% e aferir válvula de 1/4".`;
+            openToast('Simulação da Funcionalidade Futura (Copiloto IA) executada!', 'info');
+        }
+
+        // Modal de Explicação das Funcionalidades Futuras (Roadmap)
+        function openRoadmapModal(title, desc, impact, effort, justification, simResult) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-desc').innerText = desc;
+            document.getElementById('modal-impact').innerText = impact;
+            document.getElementById('modal-effort').innerText = effort;
+            document.getElementById('modal-justification').innerText = justification;
+            document.getElementById('modal-sim-result').innerText = simResult;
+
+            const modal = document.getElementById('roadmap-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeRoadmapModal() {
+            const modal = document.getElementById('roadmap-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // Renderiza os botões de CSAT (0 a 10)
+        function renderCSATButtons() {
+            const container = document.getElementById('csat-buttons');
+            container.innerHTML = '';
+            for (let i = 0; i <= 10; i++) {
+                const colorClass = i >= 8
+                    ? 'hover:bg-emerald-600 hover:text-white border-emerald-200 text-emerald-900 bg-emerald-50/60'
+                    : 'hover:bg-slate-700 hover:text-white border-slate-200 text-slate-700 bg-slate-50';
+                container.innerHTML += `
+                    <button onclick="submitCSAT(${i})" class="py-1.5 rounded-lg border text-xs font-bold transition ${colorClass}">
+                        ${i}
+                    </button>
+                `;
+            }
+        }
+
+        function submitCSAT(score) {
+            const msg = document.getElementById('csat-feedback-msg');
+            msg.classList.remove('hidden');
+            msg.innerHTML = `<i class="fa-solid fa-circle-check mr-1"></i>Nota <strong>${score}/10</strong> registrada! (Meta de validação do MVP: ≥ 8/10).`;
+            openToast(`Avaliação CSAT (${score}/10) computada nas métricas de validação do MVP!`, 'success');
+        }
+
+        // Sistema de Notificações Toast (Sem uso de alert)
+        function openToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const colors = {
+                success: 'bg-emerald-900 border-emerald-500 text-white',
+                info: 'bg-slate-900 border-cyan-400 text-white'
+            };
+            const icons = {
+                success: 'fa-circle-check text-emerald-400',
+                info: 'fa-circle-info text-cyan-400'
+            };
+
+            toast.className = `pointer-events-auto flex items-start gap-3 p-3.5 rounded-xl border-l-4 shadow-xl text-xs leading-relaxed transition-all ${colors[type] || colors.info}`;
+            toast.innerHTML = `
+                <i class="fa-solid ${icons[type] || icons.info} text-base mt-0.5"></i>
+                <div class="flex-1 font-medium">${message}</div>
+            `;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 4200);
+        }
+
+        // Inicialização ao carregar a página
+        window.onload = function () {
+            renderClientStepper();
+            renderOperatorAgenda();
+            renderCSATButtons();
+        };
+    </script>
+</body>
+</html>
